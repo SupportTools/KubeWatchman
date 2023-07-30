@@ -1,4 +1,4 @@
-name: Single cluster on default network
+name: Build and Test
 
 on:
   [workflow_dispatch, push]
@@ -18,15 +18,28 @@ jobs:
             --k3s-arg "--no-deploy=traefik,servicelb,metrics-server@server:*"
       - name: Cluster info
         run: |
-          kubectl cluster-info --context k3d-test-cluster-1
+          kubectl cluster-info --context k3d-cluster-1
       - name: Nodes
         run: |
           docker ps -a
-          kubectl config use-context k3d-test-cluster-1
+          kubectl config use-context k3d-cluster-1
           kubectl get nodes -o wide
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.20
+          cache: false
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.53 
+      - name: Test Go code
+        run: |
+          go mod tidy
+          go test ./...          
       - name: "Docker Build"
         run: |
           docker build . -t supporttools/kubewatchman:CICD
           k3d image import supporttools/kubewatchman:CICD -c test-cluster-1 --verbose
       - name: Network
-        run: docker network inspect k3d-test-cluster-1
+        run: docker network inspect k3d-cluster-1
