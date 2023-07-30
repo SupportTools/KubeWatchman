@@ -3,7 +3,7 @@ name: Build and Test
 on:
   [workflow_dispatch, push]
 jobs:
-  k3d-single-cluster-demo:
+  buid-and-test:
     name: Single cluster on default network
     runs-on: ubuntu-20.04
     steps:
