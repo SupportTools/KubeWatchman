@@ -1,5 +1,7 @@
 name: Code Analysis
-on: [pull_request]
+
+on:
+  [workflow_dispatch, push]
 jobs:
   golangci-lint:
     name: runner / golangci-lint
