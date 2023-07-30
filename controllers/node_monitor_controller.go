@@ -40,6 +40,7 @@ func (n *NodeMonitorController) Start() error {
 	logrus.Debug("Created Node informer")
 
 	// Set up the event handlers for changes
+	//nolint:errcheck
 	nodeInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    n.onAdd,
 		UpdateFunc: n.onUpdate,

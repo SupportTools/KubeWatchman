@@ -79,6 +79,7 @@ func main() {
 	// Stop controllers when finished
 	for _, controller := range controllersList {
 		logrus.Debug("Stopping controller")
+		//nolint:errcheck
 		controller.Stop()
 	}
 
