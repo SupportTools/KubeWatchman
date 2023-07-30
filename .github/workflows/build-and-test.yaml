@@ -15,7 +15,6 @@ jobs:
           args: >-
             --agents 3
             --no-lb
-            --image docker.io/rancher/k3s:v1.27.4-k3s1
             --k3s-arg "--no-deploy=traefik,servicelb,metrics-server@server:*"
       - uses: AbsaOSS/k3d-action@v2
         name: "v1.26.7 - k3d cluster create"
