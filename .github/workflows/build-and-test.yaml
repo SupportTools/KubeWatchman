@@ -4,14 +4,14 @@ on:
   [workflow_dispatch, push]
 jobs:
   buid-and-test:
-    name: Single cluster on default network
+    name: Build and Testing deployment to k3d cluster
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - uses: AbsaOSS/k3d-action@v2
         name: "Create single k3d Cluster with imported Registry"
         with:
-          cluster-name: test-cluster-1
+          cluster-name: cluster-1
           args: >-
             --agents 3
             --no-lb
@@ -40,6 +40,6 @@ jobs:
       - name: "Docker Build"
         run: |
           docker build . -t supporttools/kubewatchman:CICD
-          k3d image import supporttools/kubewatchman:CICD -c test-cluster-1 --verbose
+          k3d image import supporttools/kubewatchman:CICD -c cluster-1 --verbose
       - name: Network
         run: docker network inspect k3d-cluster-1
