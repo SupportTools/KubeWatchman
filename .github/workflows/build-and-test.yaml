@@ -9,44 +9,45 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: AbsaOSS/k3d-action@v2
-        name: "v1.27.4 - k3d cluster create"
+        name: "v1.27.3 - k3d cluster create"
         with:
-          cluster-name: cluster-1-27-4
+          cluster-name: cluster-1-27-3
           args: >-
             --agents 3
             --no-lb
+            --image docker.io/rancher/k3s:v1.27.3-k3s1
             --k3s-arg "--no-deploy=traefik,servicelb,metrics-server@server:*"
       - uses: AbsaOSS/k3d-action@v2
-        name: "v1.26.7 - k3d cluster create"
+        name: "v1.26.6 - k3d cluster create"
         with:
-          cluster-name: cluster-1-26-7
+          cluster-name: cluster-1-26-6
           args: >-
             --agents 3
             --no-lb
-            --image docker.io/rancher/k3s:v1.26.7-k3s1
+            --image docker.io/rancher/k3s:v1.26.6-k3s1
             --k3s-arg "--no-deploy=traefik,servicelb,metrics-server@server:*"
       - uses: AbsaOSS/k3d-action@v2
-        name: "v1.25.12 - k3d cluster create"
+        name: "v1.25.11 - k3d cluster create"
         with:
-          cluster-name: cluster-1-25-12
+          cluster-name: cluster-1-25-11
           args: >-
             --agents 3
             --no-lb
-            --image docker.io/rancher/k3s:v1.25.12-k3s1
+            --image docker.io/rancher/k3s:v1.25.11-k3s1
             --k3s-arg "--no-deploy=traefik,servicelb,metrics-server@server:*"
       - name: "Cluster info"
         run: |
-          kubectl cluster-info --context k3d-cluster-1-27-4
-          kubectl cluster-info --context k3d-cluster-1-26-7
-          kubectl cluster-info --context k3d-cluster-1-25-12
+          kubectl cluster-info --context k3d-cluster-1-27-3
+          kubectl cluster-info --context k3d-cluster-1-26-6
+          kubectl cluster-info --context k3d-cluster-1-25-11
       - name: "Nodes"
         run: |
           docker ps -a
-          kubectl config use-context k3d-cluster-1-25-12
+          kubectl config use-context k3d-cluster-1-25-11
           kubectl get nodes -o wide  
-          kubectl config use-context k3d-cluster-1-26-7
+          kubectl config use-context k3d-cluster-1-26-6
           kubectl get nodes -o wide
-          kubectl config use-context k3d-cluster-1-27-4
+          kubectl config use-context k3d-cluster-1-27-3
           kubectl get nodes -o wide
       - name: Setup Go
         uses: actions/setup-go@v4
@@ -64,11 +65,11 @@ jobs:
       - name: "Docker Build"
         run: |
           docker build . -t supporttools/kubewatchman:CICD
-          k3d image import supporttools/kubewatchman:CICD -c cluster-1-27-4 --verbose
-          k3d image import supporttools/kubewatchman:CICD -c cluster-1-26-7 --verbose
-          k3d image import supporttools/kubewatchman:CICD -c cluster-1-25-12 --verbose
+          k3d image import supporttools/kubewatchman:CICD -c cluster-1-27-3 --verbose
+          k3d image import supporttools/kubewatchman:CICD -c cluster-1-26-6 --verbose
+          k3d image import supporttools/kubewatchman:CICD -c cluster-1-25-11 --verbose
       - name: Network
         run: |
-          docker network inspect k3d-cluster-1-27-4
-          docker network inspect k3d-cluster-1-26-7
-          docker network inspect k3d-cluster-1-25-12
+          docker network inspect k3d-cluster-1-27-3
+          docker network inspect k3d-cluster-1-26-6
+          docker network inspect k3d-cluster-1-25-11
