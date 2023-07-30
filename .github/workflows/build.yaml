@@ -53,14 +53,17 @@ jobs:
           cache: false
       - name: Test Go code
         run: |
-          go mod tidy
           go test ./...          
-      - name: "Docker Build"
+      - name: "Docker Build with Dynamic Tag"
         run: |
-          docker build . -t supporttools/kubewatchman:CICD
-          k3d image import supporttools/kubewatchman:CICD -c cluster-1-27-3 --verbose
-          k3d image import supporttools/kubewatchman:CICD -c cluster-1-26-6 --verbose
-          k3d image import supporttools/kubewatchman:CICD -c cluster-1-25-11 --verbose
+          TAG="CICD-${GITHUB_SHA}"
+          echo "DOCKER_TAG=${TAG}" >> $GITHUB_ENV
+          docker build . -t supporttools/kubewatchman:${TAG}
+      - name: Import Image to k3d clusters
+        run: |
+          k3d image import supporttools/kubewatchman:${{ env.DOCKER_TAG }} -c cluster-1-27-3 --verbose
+          k3d image import supporttools/kubewatchman:${{ env.DOCKER_TAG }} -c cluster-1-26-6 --verbose
+          k3d image import supporttools/kubewatchman:${{ env.DOCKER_TAG }} -c cluster-1-25-11 --verbose
       - name: Network
         run: |
           docker network inspect k3d-cluster-1-27-3
