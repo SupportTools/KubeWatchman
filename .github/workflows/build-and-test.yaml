@@ -16,7 +16,6 @@ jobs:
             --agents 3
             --no-lb
             --image docker.io/rancher/k3s:v1.26.6-k3s1
-            --k3s-arg "--no-deploy=traefik,servicelb,metrics-server@server:*"
       - uses: AbsaOSS/k3d-action@v2
         name: "v1.25.11 - k3d cluster create"
         with:
@@ -25,7 +24,6 @@ jobs:
             --agents 3
             --no-lb
             --image docker.io/rancher/k3s:v1.25.11-k3s1
-            --k3s-arg "--no-deploy=traefik,servicelb,metrics-server@server:*"
       - name: "Cluster info"
         run: |
           kubectl cluster-info --context k3d-cluster-1-26-6
