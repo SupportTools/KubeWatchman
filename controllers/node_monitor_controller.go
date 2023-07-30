@@ -11,13 +11,19 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+// KubernetesClientset is an interface that wraps the needed methods of kubernetes.Clientset.
+type KubernetesClientset interface {
+	kubernetes.Interface
+}
+
 type NodeMonitorController struct {
-	Clientset *kubernetes.Clientset
+	Clientset KubernetesClientset
 	Logger    *logrus.Entry
 	stopCh    chan struct{}
 }
 
-func NewNodeMonitorController(clientset *kubernetes.Clientset, logger *logrus.Logger) *NodeMonitorController {
+// NewNodeMonitorController accepts KubernetesClientset interface, allowing both real and fake clientsets.
+func NewNodeMonitorController(clientset KubernetesClientset, logger *logrus.Logger) *NodeMonitorController {
 	return &NodeMonitorController{
 		Clientset: clientset,
 		Logger:    logger.WithField("controller", "NodeMonitorController"),

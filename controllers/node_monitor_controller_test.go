@@ -6,7 +6,6 @@ import (
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/mock"
 	"github.com/supporttools/KubeWatchman/controllers"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
 )
@@ -15,9 +14,9 @@ type MockClusterConnectionFactory struct {
 	mock.Mock
 }
 
-func (m *MockClusterConnectionFactory) NewForConfig(config *rest.Config) (*kubernetes.Clientset, error) {
+func (m *MockClusterConnectionFactory) NewForConfig(config *rest.Config) (*fake.Clientset, error) {
 	args := m.Called(config)
-	return args.Get(0).(*kubernetes.Clientset), args.Error(1)
+	return args.Get(0).(*fake.Clientset), args.Error(1)
 }
 
 func TestNodeMonitorControllerStart(t *testing.T) {
@@ -38,12 +37,12 @@ func TestNodeMonitorControllerStart(t *testing.T) {
 	logger, _ := test.NewNullLogger()
 
 	// Create the NodeMonitorController using the clientset
-	controller := controllers.NewNodeMonitorController(clientset, logger)
+	controller := controllers.NewNodeMonitorController(clientset, logger) // Use clientset here directly
 
 	// Start the controller
 	if err := controller.Start(); err != nil {
 		t.Errorf("Failed to start controller: %v", err)
 	}
 
-	// Additional testing logic...
+	// Additional testing logic needed here
 }
