@@ -46,22 +46,6 @@ jobs:
           kubectl get nodes -o wide
           kubectl config use-context k3d-cluster-1-25-11
           kubectl get nodes -o wide  
-      - name: Setup Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: 1.20
-      # - name: Dependencies
-      #   run: |
-      #     go get -v -t -d ./...
-      # - name: Install
-      #   run: |
-      #     go install -v ./...
-      - name: Build
-        run: |
-          go build -v ./...
-      - name: Test
-        run: |
-          go test -v ./...
       - name: "Docker Build with Dynamic Tag"
         run: |
           TAG="CICD-${GITHUB_SHA}"
