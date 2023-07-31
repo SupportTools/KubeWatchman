@@ -19,7 +19,7 @@ func NewNodeMonitorController(clientset KubernetesClientset, logger *logrus.Logg
 }
 
 func (n *NodeMonitorController) Start() error {
-	monitoring.ControllerStatus("nodeMonitorController", true)
+	monitoring.ControllerStatus("NodeMonitorController", true)
 	// Create a shared informer factory
 	factory := informers.NewSharedInformerFactory(n.Clientset, time.Minute)
 	logrus.Debug("Created shared informer factory")
@@ -56,34 +56,31 @@ func (n *NodeMonitorController) Stop() error {
 	return nil
 }
 
+func (n *NodeMonitorController) logNodeDetails(event string, node *v1.Node, status v1.ConditionStatus) {
+	n.Logger.Infof("Node %s: %s/%s", event, node.Name, status)
+	n.Logger.Debug("Node Details: ", node.Status, node.Status.Conditions, node.Annotations, node.Labels, node.Finalizers, node.Spec.Taints, node.Status.Capacity, node.Status.Allocatable, node.Status.Addresses)
+}
+
 func (n *NodeMonitorController) onAdd(obj interface{}) {
 	node := obj.(*v1.Node)
-	_, msg := getNodeReadyStatus(node)
-	n.Logger.Info("Node added:", node.Name, msg)
-	n.Logger.Debug("Node Status: ", node.Status)
-	n.Logger.Debug("Node Conditions: ", node.Status.Conditions)
-	n.Logger.Debug("Node Annotations: ", node.Annotations)
-	n.Logger.Debug("Node Labels: ", node.Labels)
-	n.Logger.Debug("Node Finalizers: ", node.Finalizers)
-	n.Logger.Debug("Node Taints: ", node.Spec.Taints)
-	n.Logger.Debug("Node Capacity: ", node.Status.Capacity)
-	n.Logger.Debug("Node Allocatable: ", node.Status.Allocatable)
-	n.Logger.Debug("Node Addresses: ", node.Status.Addresses)
+	status, _ := getNodeReadyStatus(node)
+	n.logNodeDetails("added", node, status)
+	summary := NewNodeSummary(node)
+	monitoring.UpdateNodeMetrics(nil, &summary)
 }
 
 func (n *NodeMonitorController) onUpdate(oldObj, newObj interface{}) {
-	node := newObj.(*v1.Node)
-	_, msg := getNodeReadyStatus(node)
-	n.Logger.Info("Node updated:", node.Name, msg)
-	n.Logger.Debug("Node Status: ", node.Status)
-	n.Logger.Debug("Node Conditions: ", node.Status.Conditions)
-	n.Logger.Debug("Node Annotations: ", node.Annotations)
-	n.Logger.Debug("Node Labels: ", node.Labels)
-	n.Logger.Debug("Node Finalizers: ", node.Finalizers)
-	n.Logger.Debug("Node Taints: ", node.Spec.Taints)
-	n.Logger.Debug("Node Capacity: ", node.Status.Capacity)
-	n.Logger.Debug("Node Allocatable: ", node.Status.Allocatable)
-	n.Logger.Debug("Node Addresses: ", node.Status.Addresses)
+	oldNode, ok1 := oldObj.(*v1.Node)
+	newNode, ok2 := newObj.(*v1.Node)
+	if !ok1 || !ok2 {
+		n.Logger.Error("Failed to convert obj to Node")
+		return
+	}
+	status, _ := getNodeReadyStatus(newNode)
+	n.logNodeDetails("updated", newNode, status)
+	oldSummary := NewNodeSummary(oldNode)
+	newSummary := NewNodeSummary(newNode)
+	monitoring.UpdateNodeMetrics(&oldSummary, &newSummary)
 }
 
 func (n *NodeMonitorController) onDelete(obj interface{}) {
@@ -92,24 +89,36 @@ func (n *NodeMonitorController) onDelete(obj interface{}) {
 		fmt.Println("Delete event with incorrect type:", obj)
 		return
 	}
-	status, msg := getNodeReadyStatus(node)
-	n.Logger.Info("Node deleted:", node.Name, msg)
-	n.Logger.Debug("Node Status: ", status)
-	n.Logger.Debug("Node Conditions: ", node.Status.Conditions)
-	n.Logger.Debug("Node Annotations: ", node.Annotations)
-	n.Logger.Debug("Node Labels: ", node.Labels)
-	n.Logger.Debug("Node Finalizers: ", node.Finalizers)
-	n.Logger.Debug("Node Taints: ", node.Spec.Taints)
-	n.Logger.Debug("Node Addresses: ", node.Status.Addresses)
-	n.Logger.Debug("Node Capacity: ", node.Status.Capacity)
-	n.Logger.Debug("Node Allocatable: ", node.Status.Allocatable)
-	n.Logger.Debug("Node Conditions: ", node.Status.Conditions)
+	status, _ := getNodeReadyStatus(node)
+	n.logNodeDetails("deleted", node, status)
+	summary := NewNodeSummary(node)
+	monitoring.UpdateNodeMetrics(&summary, nil)
 }
 
+// NewNodeSummary creates a NodeSummary from a given node
+func NewNodeSummary(node *v1.Node) monitoring.NodeSummary {
+	readyStatus, _ := getNodeReadyStatus(node)
+	return monitoring.NodeSummary{
+		Name:        node.Name,
+		ReadyStatus: readyStatus,
+		Conditions:  node.Status.Conditions,
+		Annotations: node.Annotations,
+		Labels:      node.Labels,
+		Taints:      node.Spec.Taints,
+		Capacity:    node.Status.Capacity,
+		Allocatable: node.Status.Allocatable,
+	}
+}
+
+// getNodeReadyStatus is a helper function to extract the ready status from a node
 func getNodeReadyStatus(node *v1.Node) (v1.ConditionStatus, string) {
 	for _, condition := range node.Status.Conditions {
 		if condition.Type == v1.NodeReady {
-			return condition.Status, "Ready"
+			if condition.Status == v1.ConditionTrue {
+				return condition.Status, "Ready"
+			} else {
+				return condition.Status, "NotReady"
+			}
 		}
 	}
 	return v1.ConditionUnknown, "Unknown"

@@ -60,10 +60,9 @@ func main() {
 		logrus.Fatalf("Failed to test cluster connection: %v", err)
 	}
 
-	nodeMonitorController := controllers.NewNodeMonitorController(clientset, logger)
-
 	controllersList := []controllers.Controller{
-		nodeMonitorController,
+		controllers.NewNodeMonitorController(clientset, logger),
+		controllers.NewPodMonitorController(clientset, logger),
 	}
 
 	for _, controller := range controllersList {

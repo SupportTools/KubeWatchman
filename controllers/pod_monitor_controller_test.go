@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-func TestNodeMonitorControllerStart(t *testing.T) {
+func TestPodMonitorControllerStart(t *testing.T) {
 	// Create a fake clientset
 	fakeClientset := fake.NewSimpleClientset()
 
@@ -27,8 +27,8 @@ func TestNodeMonitorControllerStart(t *testing.T) {
 	// Create a logger and hook for testing
 	logger, _ := test.NewNullLogger()
 
-	// Create the NodeMonitorController using the clientset
-	controller := controllers.NewNodeMonitorController(clientset, logger) // Use clientset here directly
+	// Create the PodMonitorController using the clientset
+	controller := controllers.NewPodMonitorController(clientset, logger) // Use clientset here directly
 
 	// Start the controller
 	if err := controller.Start(); err != nil {
