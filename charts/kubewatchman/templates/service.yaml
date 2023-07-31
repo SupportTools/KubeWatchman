@@ -5,7 +5,7 @@ metadata:
   labels:
     app: kube-watchman
 spec:
-  type: clusterIP
+  type: ClusterIP
   ports:
     - port: 8080
       targetPort: http
