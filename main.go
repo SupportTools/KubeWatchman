@@ -51,7 +51,7 @@ func main() {
 		logrus.Fatalf("Failed to create cluster connection: %v", err)
 	}
 
-	err = k8s.CheckClusterConnection(clientset, logger) // Note the change in function name
+	err = k8s.CheckClusterConnection(clientset, logger)
 	if err != nil {
 		logrus.Fatalf("Failed to test cluster connection: %v", err)
 	}
