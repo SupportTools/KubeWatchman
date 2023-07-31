@@ -6,19 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
-	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/rest"
 )
-
-type ClusterConnection interface {
-	RESTClient() rest.Interface
-	CoreV1() v1.CoreV1Interface
-}
-
-type ClusterConnectionFactory interface {
-	InClusterConfig() (*rest.Config, error)
-	NewForConfig(*rest.Config) (*kubernetes.Clientset, error)
-}
 
 func CreateClusterConnection(logger *logrus.Logger, factory ClusterConnectionFactory) (*kubernetes.Clientset, error) {
 	// Use the factory to create the in-cluster config and clientset

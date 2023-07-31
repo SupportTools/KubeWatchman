@@ -9,23 +9,37 @@ import (
 type Config struct {
 	Debug      bool
 	KUBECONFIG string
+	Port       string
 }
 
 func LoadConfigFromEnv() Config {
 	config := Config{
 		Debug:      parseEnvBool("DEBUG"),
-		KUBECONFIG: os.Getenv("KUBECONFIG"),
+		KUBECONFIG: getEnvOrDefault("KUBECONFIG", "~/.kube/config"),
+		Port:       getEnvOrDefault("PORT", "8080"),
 	}
 
 	return config
 }
 
-func parseEnvInt(key string) int {
+func getEnvOrDefault(key, defaultValue string) string {
 	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
+
+func parseEnvInt(key string, defaultValue int) int {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
 	var intValue int
 	_, err := fmt.Sscanf(value, "%d", &intValue)
 	if err != nil {
-		log.Fatalf("Failed to parse environment variable %s: %v", key, err)
+		log.Printf("Failed to parse environment variable %s: %v. Using default value: %d", key, err, defaultValue)
+		return defaultValue
 	}
 	return intValue
 }

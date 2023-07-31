@@ -5,24 +5,12 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/supporttools/KubeWatchman/monitoring"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/informers"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 )
 
-// KubernetesClientset is an interface that wraps the needed methods of kubernetes.Clientset.
-type KubernetesClientset interface {
-	kubernetes.Interface
-}
-
-type NodeMonitorController struct {
-	Clientset KubernetesClientset
-	Logger    *logrus.Entry
-	stopCh    chan struct{}
-}
-
-// NewNodeMonitorController accepts KubernetesClientset interface, allowing both real and fake clientsets.
 func NewNodeMonitorController(clientset KubernetesClientset, logger *logrus.Logger) *NodeMonitorController {
 	return &NodeMonitorController{
 		Clientset: clientset,
@@ -31,6 +19,7 @@ func NewNodeMonitorController(clientset KubernetesClientset, logger *logrus.Logg
 }
 
 func (n *NodeMonitorController) Start() error {
+	monitoring.ControllerStatus("nodeMonitorController", true)
 	// Create a shared informer factory
 	factory := informers.NewSharedInformerFactory(n.Clientset, time.Minute)
 	logrus.Debug("Created shared informer factory")
@@ -62,6 +51,7 @@ func (n *NodeMonitorController) Start() error {
 }
 
 func (n *NodeMonitorController) Stop() error {
+	monitoring.ControllerStatus("nodeMonitorController", false)
 	close(n.stopCh)
 	return nil
 }

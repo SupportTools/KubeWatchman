@@ -10,11 +10,7 @@ spec:
     - port: 8080
       targetPort: http
       protocol: TCP
-      name: http-api
-    - port: 9000
-      targetPort: http
-      protocol: TCP
-      name: metrics
+      name: http
   selector:
     app: kube-watchman
     component: controller

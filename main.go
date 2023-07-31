@@ -10,6 +10,7 @@ import (
 	"github.com/supporttools/KubeWatchman/config"
 	"github.com/supporttools/KubeWatchman/controllers"
 	"github.com/supporttools/KubeWatchman/k8s"
+	"github.com/supporttools/KubeWatchman/monitoring"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -45,6 +46,9 @@ func main() {
 		logger.SetLevel(logrus.DebugLevel)
 	}
 
+	// Start the web server
+	go monitoring.StartWebServer(cfg.Port, logger)
+
 	factory := &RealClusterConnectionFactory{}
 	clientset, err := k8s.CreateClusterConnection(logger, factory)
 	if err != nil {
@@ -68,6 +72,9 @@ func main() {
 			logrus.Fatalf("Failed to start controller: %v", err)
 		}
 	}
+
+	// Set the /readyz endpoint to be ready
+	monitoring.SetControllersStarted()
 
 	// Channel to catch OS signals
 	signalCh := make(chan os.Signal, 1)
