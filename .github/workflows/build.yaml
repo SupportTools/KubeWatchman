@@ -2,42 +2,49 @@ name: Build
 
 on:
   [workflow_dispatch, push]
+
 jobs:
-  buid-and-test:
+  build-and-test:
     name: Build and Testing deployment to k3d cluster
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
-      - uses: AbsaOSS/k3d-action@v2
-        name: "v1.27.3 - k3d cluster create"
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Create k3d cluster v1.27.3
+        uses: AbsaOSS/k3d-action@v2
         with:
           cluster-name: cluster-1-27-3
           args: >-
             --agents 3
             --no-lb
             --image docker.io/rancher/k3s:v1.27.3-k3s1
-      - uses: AbsaOSS/k3d-action@v2
-        name: "v1.26.6 - k3d cluster create"
+      
+      - name: Create k3d cluster v1.26.6
+        uses: AbsaOSS/k3d-action@v2
         with:
           cluster-name: cluster-1-26-6
           args: >-
             --agents 3
             --no-lb
             --image docker.io/rancher/k3s:v1.26.6-k3s1
-      - uses: AbsaOSS/k3d-action@v2
-        name: "v1.25.11 - k3d cluster create"
+      
+      - name: Create k3d cluster v1.25.11
+        uses: AbsaOSS/k3d-action@v2
         with:
           cluster-name: cluster-1-25-11
           args: >-
             --agents 3
             --no-lb
             --image docker.io/rancher/k3s:v1.25.11-k3s1
-      - name: "Cluster info"
+      
+      - name: Check Cluster info
         run: |
           kubectl cluster-info --context k3d-cluster-1-27-3
           kubectl cluster-info --context k3d-cluster-1-26-6
           kubectl cluster-info --context k3d-cluster-1-25-11
-      - name: "Nodes"
+      
+      - name: Check Nodes
         run: |
           docker ps -a
           kubectl config use-context k3d-cluster-1-27-3
@@ -46,18 +53,36 @@ jobs:
           kubectl get nodes -o wide
           kubectl config use-context k3d-cluster-1-25-11
           kubectl get nodes -o wide  
-      - name: "Docker Build with Dynamic Tag"
+      
+      - name: Docker Build with Dynamic Tag
         run: |
           TAG="CICD-${GITHUB_SHA}"
           echo "DOCKER_TAG=${TAG}" >> $GITHUB_ENV
           docker build . -t supporttools/kubewatchman:${TAG}
+      
       - name: Import Image to k3d clusters
         run: |
           k3d image import supporttools/kubewatchman:${{ env.DOCKER_TAG }} -c cluster-1-27-3 --verbose
           k3d image import supporttools/kubewatchman:${{ env.DOCKER_TAG }} -c cluster-1-26-6 --verbose
           k3d image import supporttools/kubewatchman:${{ env.DOCKER_TAG }} -c cluster-1-25-11 --verbose
-      - name: Network
+      
+      - name: Check Network
         run: |
           docker network inspect k3d-cluster-1-27-3
           docker network inspect k3d-cluster-1-26-6
           docker network inspect k3d-cluster-1-25-11
+
+      - name: Setup helm
+        run: |
+          curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+          chmod 700 get_helm.sh
+          ./get_helm.sh
+
+      - name: Install kubewatchman via helm
+        run: |
+          kubectl config use-context k3d-cluster-1-27-3
+          helm install kubewatchman ./charts/kubewatchman --namespace kubewatchman --create-namespace --set image.tag=${{ env.DOCKER_TAG }}
+          kubectl config use-context k3d-cluster-1-26-6
+          helm install kubewatchman ./charts/kubewatchman --namespace kubewatchman --create-namespace --set image.tag=${{ env.DOCKER_TAG }}
+          kubectl config use-context k3d-cluster-1-25-11
+          helm install kubewatchman ./charts/kubewatchman --namespace kubewatchman --create-namespace --set image.tag=${{ env.DOCKER_TAG }}
